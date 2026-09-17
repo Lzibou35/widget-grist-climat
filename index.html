@@ -10,7 +10,7 @@ body{font-family:Arial,sans-serif;margin:0;background:#fff;color:#222}
 .wrap{max-width:900px;margin:0 auto;padding:28px}
 h1{font-size:24px;margin:0 0 24px}
 label{display:block;font-weight:600;margin:16px 0 6px}
-input,select,textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid #bbb;border-radius:6px;font:inherit}
+input,select,textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid #bbb;border-radius:6px;font:inherit;background:#fff}
 textarea{min-height:80px;resize:vertical}
 .card{border:1px solid #ddd;border-radius:10px;padding:18px;margin:18px 0;background:#fafafa}
 .card h2{font-size:18px;margin:0 0 8px}
@@ -20,6 +20,7 @@ textarea{min-height:80px;resize:vertical}
 .radio input{width:auto}
 .buttons{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
 button{border:0;border-radius:7px;padding:11px 16px;font-weight:600;cursor:pointer}
+button:disabled{cursor:default;opacity:.65}
 .primary{background:#3b5ccc;color:white}
 .secondary{background:#e8ebf2;color:#222}
 .hidden{display:none}
@@ -54,9 +55,12 @@ button{border:0;border-radius:7px;padding:11px 16px;font-weight:600;cursor:point
 <div id="cards"></div>
 <div class="buttons">
 <button type="button" class="secondary" id="add">+ Ajouter une autre donnée</button>
-<button type="button" class="primary" id="finish">J’ai terminé</button>
 </div>
 <p class="note">Vous pouvez ajouter autant de jeux de données que nécessaire.</p>
+</div>
+
+<div class="buttons">
+<button type="button" class="primary" id="finish">J’ai terminé</button>
 </div>
 
 <div id="status" class="status hidden"></div>
@@ -68,7 +72,21 @@ grist.ready({requiredAccess:"full"});
 const cards=document.getElementById("cards");
 const datasets=document.getElementById("datasets");
 const status=document.getElementById("status");
+const finish=document.getElementById("finish");
 let count=0;
+
+const themes=["Climat","Air","Energie","Construction"];
+const poles=["Stratégie","Energie & Réseaux","Usage et Décarbonation"];
+const confidentialites=[
+  "1 : Donnée publique diffusable à l’externe",
+  "2 : Donnée interne sans restriction d'accès",
+  "3 : Donnée interne avec restriction"
+];
+
+function options(values){
+  return '<option value="">Sélectionner…</option>' +
+    values.map(v=>`<option value="${v}">${v}</option>`).join("");
+}
 
 function addCard(){
   count++;
@@ -78,14 +96,18 @@ function addCard(){
     <h2>Donnée ${count}</h2>
     <label>Nom du jeu de données</label>
     <input class="donnee" type="text">
+
     <label>Thème</label>
-    <input class="theme" type="text">
+    <select class="theme">${options(themes)}</select>
+
     <label>Pôle</label>
-    <input class="dpole" type="text">
+    <select class="dpole">${options(poles)}</select>
+
     <label>Description (facultatif)</label>
     <textarea class="description"></textarea>
+
     <label>Niveau de confidentialité</label>
-    <input class="conf" type="text">
+    <select class="conf">${options(confidentialites)}</select>
   `;
   cards.appendChild(card);
 }
@@ -103,21 +125,44 @@ document.querySelectorAll('input[name="interne"]').forEach(r=>{
 
 document.getElementById("add").addEventListener("click",addCard);
 
-function getValue(selector, card){ return card.querySelector(selector).value.trim(); }
+function getValue(selector,card){
+  return card.querySelector(selector).value.trim();
+}
 
-document.getElementById("finish").addEventListener("click",async()=>{
+finish.addEventListener("click",async()=>{
   status.className="status";
   status.textContent="Enregistrement en cours…";
-  try{
-    const parentTable=grist.getTable("Etat_des_lieux_donnees_CAEC");
-    const childTable=grist.getTable("Jeux_de_données");
+  finish.disabled=true;
 
+  try{
     const prenom=document.getElementById("prenom").value.trim();
     const nom=document.getElementById("nom").value.trim();
     const pole=document.getElementById("pole").value.trim();
     const interne=document.querySelector('input[name="interne"]:checked')?.value || "";
 
-    if(!prenom || !nom || !pole || !interne) throw new Error("Merci de renseigner le prénom, le nom, le pôle et de répondre à la question.");
+    if(!prenom || !nom || !pole || !interne){
+      throw new Error("Merci de renseigner le prénom, le nom, le pôle et de répondre à la question.");
+    }
+
+    let records=[];
+    if(interne==="Oui"){
+      records=[...cards.querySelectorAll(".card")].map(card=>({
+        Donnee:getValue(".donnee",card),
+        Theme:getValue(".theme",card),
+        Pole:getValue(".dpole",card),
+        Description_Facultatif:getValue(".description",card),
+        Niveau_confidentialite:getValue(".conf",card)
+      }));
+
+      for(const row of records){
+        if(!row.Donnee || !row.Theme || !row.Pole || !row.Niveau_confidentialite){
+          throw new Error("Merci de compléter les champs obligatoires de chaque jeu de données.");
+        }
+      }
+    }
+
+    const parentTable=grist.getTable("Etat_des_lieux_donnees_CAEC");
+    const childTable=grist.getTable("Jeux_de_données");
 
     const parentResult=await parentTable.create([{
       Prenom:prenom,
@@ -126,29 +171,31 @@ document.getElementById("finish").addEventListener("click",async()=>{
       "Utilisez_vous_des_donnees_pouvant_etre_utilisees_en_interne_notes_prefet_contexte_":interne
     }]);
 
-    const parentId=Array.isArray(parentResult) ? parentResult[0] :
-      (parentResult && parentResult.id) ? parentResult.id :
-      (parentResult && parentResult[0]) ? parentResult[0] : null;
+    const parentId=Array.isArray(parentResult) ? parentResult[0] : parentResult?.id;
+    if(!parentId){
+      throw new Error("Impossible de récupérer l’identifiant de la réponse.");
+    }
 
-    if(!parentId) throw new Error("Impossible de récupérer l’identifiant de la réponse.");
-
-    if(interne==="Oui"){
-      const records=[...cards.querySelectorAll(".card")].map(card=>({
-        Collaborateur:parentId,
-        Donnee:getValue(".donnee",card),
-        Theme:getValue(".theme",card),
-        Pole:getValue(".dpole",card),
-        Description_Facultatif:getValue(".description",card),
-        Niveau_confidentialite:getValue(".conf",card)
-      }));
-      if(records.length) await childTable.create(records);
+    if(interne==="Oui" && records.length){
+      await childTable.create(
+        records.map(row=>({
+          Collaborateur:parentId,
+          Donnee:row.Donnee,
+          Theme:row.Theme,
+          Pole:row.Pole,
+          Description_Facultatif:row.Description_Facultatif,
+          Niveau_confidentialite:row.Niveau_confidentialite
+        }))
+      );
     }
 
     status.textContent="Merci, votre réponse a bien été enregistrée.";
-    document.querySelectorAll("input,textarea,button").forEach(el=>el.disabled=true);
+    document.querySelectorAll("input,select,textarea,button").forEach(el=>el.disabled=true);
+
   }catch(e){
     status.className="status error";
     status.textContent=e.message || "Une erreur est survenue.";
+    finish.disabled=false;
   }
 });
 </script>
