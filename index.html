@@ -162,36 +162,36 @@ finish.addEventListener("click",async()=>{
       }
     }
 
-    const parentTable=grist.getTable("Etat_des_lieux_donnees_CAEC");
-    const childTable=grist.getTable("Jeux_de_donnees");
+const parentTable=grist.getTable("Etat_des_lieux_donnees_CAEC");
+const childTable=grist.getTable("Jeux_de_donnees");
 
-    const parentResult=await parentTable.create([{
-      prenom:prenom,
-      $Nom:nom,
-      $Pole:pole,
-      $Utilisez_vous_des_donnees_pouvant_etre_utilisees_en_interne_notes_prefet_contexte_:interne
-    }]);
+const parentResult=await parentTable.create([{
+  prenom:prenom,
+  Nom:nom,
+  Pole:pole,
+  Utilisez_vous_des_donnees_pouvant_etre_utilisees_en_interne_notes_prefet_contexte_:interne
+}]);
 
-    const parentId=Array.isArray(parentResult)
-      ? parentResult[0]
-      : parentResult?.id;
+const parentId=Array.isArray(parentResult)
+  ? parentResult[0]
+  : parentResult?.id;
 
-    if(!parentId){
-      throw new Error("Impossible de récupérer l’identifiant de la réponse.");
-    }
+if(!parentId){
+  throw new Error("Impossible de récupérer l’identifiant de la réponse.");
+}
 
-    if(interne==="Oui" && records.length){
-      await childTable.create(
-        records.map(row=>({
-          $Collaborateur:parentId,
-          $Donnee:row.Donnee,
-          $Theme:row.Theme,
-          $Pole:row.Pole,
-          $Description_Facultatif:row.Description_Facultatif,
-          $Niveau_de_confidentialite:row.Niveau_de_confidentialite
-        }))
-      );
-    }
+if(interne==="Oui" && records.length){
+  await childTable.create(
+    records.map(row=>({
+      Collaborateur:parentId,
+      Donnee:row.Donnee,
+      Theme:row.Theme,
+      Pole:row.Pole,
+      Description_Facultatif:row.Description_Facultatif,
+      Niveau_de_confidentialite:row.Niveau_de_confidentialite
+    }))
+  );
+}
 
     status.textContent="Merci, votre réponse a bien été enregistrée.";
     document.querySelectorAll("input,select,textarea,button").forEach(el=>el.disabled=true);
