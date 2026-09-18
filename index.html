@@ -145,17 +145,18 @@ finish.addEventListener("click",async()=>{
     }
 
     let records=[];
+
     if(interne==="Oui"){
       records=[...cards.querySelectorAll(".card")].map(card=>({
         Donnee:getValue(".donnee",card),
         Theme:getValue(".theme",card),
         Pole:getValue(".dpole",card),
         Description_Facultatif:getValue(".description",card),
-        Niveau_confidentialite:getValue(".conf",card)
+        Niveau_de_confidentialite:getValue(".conf",card)
       }));
 
       for(const row of records){
-        if(!row.Donnee || !row.Theme || !row.Pole || !row.Niveau_confidentialite){
+        if(!row.Donnee || !row.Theme || !row.Pole || !row.Niveau_de_confidentialite){
           throw new Error("Merci de compléter les champs obligatoires de chaque jeu de données.");
         }
       }
@@ -165,13 +166,16 @@ finish.addEventListener("click",async()=>{
     const childTable=grist.getTable("Jeux_de_donnees");
 
     const parentResult=await parentTable.create([{
-      Prenom:prenom,
-      Nom:nom,
-      "Pôle":pole,
-      "Utilisez_vous_des_donnees_pouvant_etre_utilisees_en_interne_notes_prefet_contexte_":interne
+      prenom:prenom,
+      $Nom:nom,
+      $Pole:pole,
+      $Utilisez_vous_des_donnees_pouvant_etre_utilisees_en_interne_notes_prefet_contexte_:interne
     }]);
 
-    const parentId=Array.isArray(parentResult) ? parentResult[0] : parentResult?.id;
+    const parentId=Array.isArray(parentResult)
+      ? parentResult[0]
+      : parentResult?.id;
+
     if(!parentId){
       throw new Error("Impossible de récupérer l’identifiant de la réponse.");
     }
@@ -179,12 +183,12 @@ finish.addEventListener("click",async()=>{
     if(interne==="Oui" && records.length){
       await childTable.create(
         records.map(row=>({
-          Collaborateur:parentId,
-          Donnee:row.Donnee,
-          Theme:row.Theme,
-          Pole:row.Pole,
-          Description_Facultatif:row.Description_Facultatif,
-          Niveau_confidentialite:row.Niveau_confidentialite
+          $Collaborateur:parentId,
+          $Donnee:row.Donnee,
+          $Theme:row.Theme,
+          $Pole:row.Pole,
+          $Description_Facultatif:row.Description_Facultatif,
+          $Niveau_de_confidentialite:row.Niveau_de_confidentialite
         }))
       );
     }
