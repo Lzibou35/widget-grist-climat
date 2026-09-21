@@ -1,207 +1,31 @@
-<!doctype html>
-<html lang="fr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>État des lieux des données CAEC</title>
-<script src="https://grist.numerique.gouv.fr/grist-plugin-api.js"></script>
-<style>
-body{font-family:Arial,sans-serif;margin:0;background:#fff;color:#222}
-.wrap{max-width:900px;margin:0 auto;padding:28px}
-h1{font-size:24px;margin:0 0 24px}
-label{display:block;font-weight:600;margin:16px 0 6px}
-input,select,textarea{box-sizing:border-box;width:100%;padding:10px;border:1px solid #bbb;border-radius:6px;font:inherit;background:#fff}
-textarea{min-height:80px;resize:vertical}
-.card{border:1px solid #ddd;border-radius:10px;padding:18px;margin:18px 0;background:#fafafa}
-.card h2{font-size:18px;margin:0 0 8px}
-.question{margin:22px 0;padding:16px;border-radius:8px;background:#f3f5f7}
-.radio{display:flex;gap:24px;margin-top:10px}
-.radio label{font-weight:400;margin:0}
-.radio input{width:auto}
-.buttons{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
-button{border:0;border-radius:7px;padding:11px 16px;font-weight:600;cursor:pointer}
-button:disabled{cursor:default;opacity:.65}
-.primary{background:#3b5ccc;color:white}
-.secondary{background:#e8ebf2;color:#222}
-.hidden{display:none}
-.note{color:#666;font-size:13px;margin-top:8px}
-.status{margin-top:18px;padding:12px;border-radius:7px;background:#eef5ee}
-.error{background:#fdeeee;color:#8a1f1f}
-</style>
-</head>
-<body>
-<div class="wrap">
-<h1>État des lieux des données CAEC</h1>
-
-<label for="prenom">Prénom</label>
-<input id="prenom" type="text">
-
-<label for="nom">Nom</label>
-<input id="nom" type="text">
-
-<label for="pole">Pôle</label>
-<input id="pole" type="text">
-
-<div class="question">
-<strong>Utilisez-vous des données pouvant être utilisées en interne (notes préfet, contexte…) ?</strong>
-<div class="radio">
-<label><input type="radio" name="interne" value="Oui"> Oui</label>
-<label><input type="radio" name="interne" value="Non"> Non</label>
-</div>
-</div>
-
-<div id="datasets" class="hidden">
-<h2>Jeux de données</h2>
-<div id="cards"></div>
-<div class="buttons">
-<button type="button" class="secondary" id="add">+ Ajouter une autre donnée</button>
-</div>
-<p class="note">Vous pouvez ajouter autant de jeux de données que nécessaire.</p>
-</div>
-
-<div class="buttons">
-<button type="button" class="primary" id="finish">J’ai terminé</button>
-</div>
-
-<div id="status" class="status hidden"></div>
-</div>
+<script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
 
 <script>
 grist.ready({requiredAccess:"full"});
 
-const cards=document.getElementById("cards");
-const datasets=document.getElementById("datasets");
-const status=document.getElementById("status");
-const finish=document.getElementById("finish");
-let count=0;
+async function testGrist() {
+  try {
+    console.log("TEST 1 : accès à Grist");
 
-const themes=["Climat","Air","Energie","Construction"];
-const poles=["Stratégie","Energie & Réseaux","Usage et Décarbonation"];
-const confidentialites=[
-  "1 : Donnée publique diffusable à l’externe",
-  "2 : Donnée interne sans restriction d'accès",
-  "3 : Donnée interne avec restriction"
-];
+    const table = grist.getTable("Etat_des_lieux_donnees_CAEC");
 
-function options(values){
-  return '<option value="">Sélectionner…</option>' +
-    values.map(v=>`<option value="${v}">${v}</option>`).join("");
-}
+    console.log("TEST 2 : table récupérée");
 
-function addCard(){
-  count++;
-  const card=document.createElement("div");
-  card.className="card";
-  card.innerHTML=`
-    <h2>Donnée ${count}</h2>
-    <label>Nom du jeu de données</label>
-    <input class="donnee" type="text">
+    const result = await table.create([{
+      Prenom: "TEST",
+      Nom: "TEST",
+      Pole: "TEST"
+    }]);
 
-    <label>Thème</label>
-    <select class="theme">${options(themes)}</select>
+    console.log("TEST 3 : ligne créée", result);
 
-    <label>Pôle</label>
-    <select class="dpole">${options(poles)}</select>
-
-    <label>Description (facultatif)</label>
-    <textarea class="description"></textarea>
-
-    <label>Niveau de confidentialité</label>
-    <select class="conf">${options(confidentialites)}</select>
-  `;
-  cards.appendChild(card);
-}
-
-document.querySelectorAll('input[name="interne"]').forEach(r=>{
-  r.addEventListener("change",()=>{
-    if(r.checked && r.value==="Oui"){
-      datasets.classList.remove("hidden");
-      if(count===0) addCard();
-    }else if(r.checked && r.value==="Non"){
-      datasets.classList.add("hidden");
-    }
-  });
-});
-
-document.getElementById("add").addEventListener("click",addCard);
-
-function getValue(selector,card){
-  return card.querySelector(selector).value.trim();
-}
-
-finish.addEventListener("click",async()=>{
-  status.className="status";
-  status.textContent="Enregistrement en cours…";
-  finish.disabled=true;
-
-  try{
-    const prenom=document.getElementById("prenom").value.trim();
-    const nom=document.getElementById("nom").value.trim();
-    const pole=document.getElementById("pole").value.trim();
-    const interne=document.querySelector('input[name="interne"]:checked')?.value || "";
-
-    if(!prenom || !nom || !pole || !interne){
-      throw new Error("Merci de renseigner le prénom, le nom, le pôle et de répondre à la question.");
-    }
-
-    let records=[];
-
-    if(interne==="Oui"){
-      records=[...cards.querySelectorAll(".card")].map(card=>({
-        Donnee:getValue(".donnee",card),
-        Theme:getValue(".theme",card),
-        Pole:getValue(".dpole",card),
-        Description_Facultatif:getValue(".description",card),
-        Niveau_de_confidentialite:getValue(".conf",card)
-      }));
-
-      for(const row of records){
-        if(!row.Donnee || !row.Theme || !row.Pole || !row.Niveau_de_confidentialite){
-          throw new Error("Merci de compléter les champs obligatoires de chaque jeu de données.");
-        }
-      }
-    }
-
-const parentTable=grist.getTable("Etat_des_lieux_donnees_CAEC");
-const childTable=grist.getTable("Jeux_de_donnees");
-console.log("VALEURS TEST :", prenom, nom, pole, interne);
-const parentResult=await parentTable.create([{
-  $Prenom: prenom,
-  $Nom: nom,
-  $Pole: pole,
-  $Utilisez_vous_des_donnees_pouvant_etre_utilisees_en_interne_notes_prefet_contexte_: interne
-}]);
-
-const parentId=Array.isArray(parentResult)
-  ? parentResult[0]
-  : parentResult?.id;
-
-if(!parentId){
-  throw new Error("Impossible de récupérer l’identifiant de la réponse.");
-}
-
-if(interne==="Oui" && records.length){
-  await childTable.create(
-  records.map(row=>({
-  $Collaborateur: parentId,
-  $Donnee: row.Donnee,
-  $Theme: row.Theme,
-  $Pole: row.Pole,
-  $Description_Facultatif: row.Description_Facultatif,
-  $Niveau_de_confidentialite: row.Niveau_de_confidentialite
-}))
-  );
-}
-
-    status.textContent="Merci, votre réponse a bien été enregistrée.";
-    document.querySelectorAll("input,select,textarea,button").forEach(el=>el.disabled=true);
-
-  }catch(e){
-    status.className="status error";
-    status.textContent=e.message || "Une erreur est survenue.";
-    finish.disabled=false;
+    alert("TEST OK : ligne créée dans Grist");
   }
-});
+  catch(e) {
+    console.error("ERREUR TEST :", e);
+    alert("ERREUR : " + (e.message || e));
+  }
+}
+
+window.addEventListener("load", testGrist);
 </script>
-</body>
-</html>
