@@ -3,55 +3,29 @@
 <script>
 grist.ready({requiredAccess:"full"});
 
-async function testGrist() {
+async function test() {
   try {
-    console.log("TEST 1 : accès à Grist");
+    console.log("TEST A : accès à la table principale");
 
-    const parentTable = grist.getTable("Etat_des_lieux_donnees_CAEC");
-    const childTable = grist.getTable("Jeux_de_donnees");
+    const parentTable =
+      grist.getTable("Etat_des_lieux_donnees_CAEC");
 
-    console.log("TEST 2 : les deux tables sont accessibles");
+    console.log("OK parent :", parentTable);
 
-    // Création d'une réponse principale
-    const parentResult = await parentTable.create([{
-      Prenom: "TEST_PARENT",
-      Nom: "TEST_PARENT",
-      Pole: "TEST_PARENT",
-      Utilisez_vous_des_donnees_pouvant_etre_utilisees_en_interne_notes_prefet_contexte_: "Oui"
-    }]);
+    console.log("TEST B : accès à la table Jeux_de_donnees");
 
-    console.log("Résultat parent :", parentResult);
+    const childTable =
+      grist.getTable("Jeux_de_donnees");
 
-    const parentId = Array.isArray(parentResult)
-      ? parentResult[0]
-      : parentResult?.id;
+    console.log("OK enfant :", childTable);
 
-    console.log("ID parent :", parentId);
-
-    if (!parentId) {
-      throw new Error("Impossible de récupérer l'ID de la ligne parent.");
-    }
-
-    // Création d'un jeu de données lié au parent
-    const childResult = await childTable.create([{
-      Collaborateur: parentId,
-      Donnee: "TEST_DONNEE",
-      Theme: "Climat",
-      Pole: "Stratégie",
-      Description_Facultatif: "TEST_DESCRIPTION",
-      Niveau_de_confidentialite: "1 : Donnée publique diffusable à l’externe"
-    }]);
-
-    console.log("Résultat enfant :", childResult);
-
-    alert("TEST COMPLET OK : parent + jeu de données créés !");
+    alert("OK : les deux tables sont accessibles.");
   }
-
   catch(e) {
-    console.error("ERREUR TEST :", e);
+    console.error("ERREUR :", e);
     alert("ERREUR : " + (e.message || e));
   }
 }
 
-window.addEventListener("load", testGrist);
+window.addEventListener("load", test);
 </script>
