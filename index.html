@@ -5,9 +5,9 @@ grist.ready({requiredAccess:"full"});
 
 async function test() {
   try {
-    console.log("TEST : création dans Jeux_de_donnees");
-
     const childTable = grist.getTable("Jeux_de_donnees");
+
+    console.log("Création de la ligne enfant...");
 
     const result = await childTable.create([{
       Donnee: "TEST_ENFANT",
@@ -17,13 +17,12 @@ async function test() {
       Niveau_de_confidentialite: "1 : Donnée publique diffusable à l’externe"
     }]);
 
-    console.log("Résultat :", result);
+    console.log("RESULTAT CREATION :", result);
 
     alert("OK : ligne créée dans Jeux_de_donnees !");
   }
-
   catch(e) {
-    console.error("ERREUR :", e);
+    console.error("ERREUR CREATION :", e);
     alert("ERREUR : " + (e.message || e));
   }
 }
