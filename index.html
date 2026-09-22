@@ -5,22 +5,23 @@ grist.ready({requiredAccess:"full"});
 
 async function test() {
   try {
-    console.log("TEST A : accès à la table principale");
+    console.log("TEST : création dans Jeux_de_donnees");
 
-    const parentTable =
-      grist.getTable("Etat_des_lieux_donnees_CAEC");
+    const childTable = grist.getTable("Jeux_de_donnees");
 
-    console.log("OK parent :", parentTable);
+    const result = await childTable.create([{
+      Donnee: "TEST_ENFANT",
+      Theme: "Climat",
+      Pole: "Stratégie",
+      Description_Facultatif: "Test écriture table enfant",
+      Niveau_de_confidentialite: "1 : Donnée publique diffusable à l’externe"
+    }]);
 
-    console.log("TEST B : accès à la table Jeux_de_donnees");
+    console.log("Résultat :", result);
 
-    const childTable =
-      grist.getTable("Jeux_de_donnees");
-
-    console.log("OK enfant :", childTable);
-
-    alert("OK : les deux tables sont accessibles.");
+    alert("OK : ligne créée dans Jeux_de_donnees !");
   }
+
   catch(e) {
     console.error("ERREUR :", e);
     alert("ERREUR : " + (e.message || e));
