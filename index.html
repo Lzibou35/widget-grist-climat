@@ -2,7 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<title>Test Grist</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Test accès Grist</title>
 
 <script src="https://grist.numerique.gouv.fr/grist-plugin-api.js"></script>
 
@@ -15,9 +16,10 @@ body {
 button {
   padding: 12px 20px;
   font-size: 16px;
+  cursor: pointer;
 }
 
-#result {
+pre {
   margin-top: 20px;
   padding: 15px;
   background: #f1f1f1;
@@ -28,11 +30,11 @@ button {
 
 <body>
 
-<h2>Test AddRecord</h2>
+<h2>Test accès API Grist</h2>
 
-<button id="test">Créer TEST_APPLY</button>
+<button id="test">Tester l'accès</button>
 
-<div id="result">En attente…</div>
+<pre id="result">En attente…</pre>
 
 <script>
 
@@ -40,53 +42,38 @@ grist.ready({
   requiredAccess: "full"
 });
 
-const button = document.getElementById("test");
-const result = document.getElementById("result");
+document.getElementById("test").addEventListener("click", async () => {
 
-button.addEventListener("click", async () => {
-
-  button.disabled = true;
-  result.textContent = "Création en cours…";
+  const result = document.getElementById("result");
 
   try {
 
+    result.textContent = "Obtention du jeton…";
+
     console.log("grist =", grist);
-    console.log("docApi =", grist.docApi);
+    console.log("getAccessToken =", grist.getAccessToken);
 
-    const actions = [[
-      "AddRecord",
-      "Jeux_de_donnees",
-      null,
-      {
-        Donnee: "TEST_APPLY",
-        Theme: "Climat",
-        Pole: "Stratégie",
-        Description_Facultatif: "Test AddRecord",
-        Niveau_de_confidentialite:
-          "1 : Donnée publique diffusable à l’externe"
-      }
-    ]];
+    const tokenInfo = await grist.getAccessToken({
+      readOnly: false
+    });
 
-    const response =
-      await grist.docApi.applyUserActions(actions);
-
-    console.log("REPONSE :", response);
+    console.log("TOKEN INFO =", tokenInfo);
 
     result.textContent =
-      "✅ AddRecord exécuté.\n\n" +
-      JSON.stringify(response, null, 2);
+      "✅ JETON OBTENU\n\n" +
+      "baseUrl : " + tokenInfo.baseUrl + "\n\n" +
+      "ttlMsecs : " + tokenInfo.ttlMsecs;
 
   } catch (e) {
 
-    console.error("ERREUR :", e);
+    console.error("ERREUR =", e);
 
     result.textContent =
-      "❌ ERREUR :\n\n" +
+      "❌ ERREUR\n\n" +
       (e.message || e);
 
   }
 
-  button.disabled = false;
 });
 
 </script>
