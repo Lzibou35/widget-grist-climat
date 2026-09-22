@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-
 <title>Test Grist</title>
 
 <script src="https://grist.numerique.gouv.fr/grist-plugin-api.js"></script>
+
 <style>
 body {
   font-family: Arial, sans-serif;
@@ -16,28 +16,26 @@ body {
 button {
   padding: 12px 20px;
   font-size: 16px;
-  cursor: pointer;
 }
 
-#result {
+pre {
   margin-top: 20px;
   padding: 15px;
   background: #f1f1f1;
+  white-space: pre-wrap;
 }
 </style>
 </head>
 
 <body>
 
-<h2>Test écriture Jeux_de_donnees</h2>
+<h2>Test Jeux_de_donnees</h2>
 
 <button id="test">
-Créer une ligne de test
+Créer puis relire
 </button>
 
-<div id="result">
-En attente du test…
-</div>
+<pre id="result">En attente…</pre>
 
 <script>
 
@@ -45,54 +43,51 @@ grist.ready({
   requiredAccess: "full"
 });
 
-const button = document.getElementById("test");
-const result = document.getElementById("result");
+document.getElementById("test").addEventListener("click", async () => {
 
-button.addEventListener("click", async function() {
-
-  result.textContent = "Création en cours…";
-  button.disabled = true;
+  const result = document.getElementById("result");
 
   try {
 
-    console.log("TEST : début");
+    result.textContent = "Création en cours…";
 
     const table = grist.getTable("Jeux_de_donnees");
 
-    console.log("TEST : table obtenue", table);
-
-    const lignes = await table.create([{
-
-      Donnee: "TEST_ENFANT",
-
+    // 1. Création
+    const created = await table.create([{
+      Donnee: "TEST_ENFANT_001",
       Theme: "Climat",
-
       Pole: "Stratégie",
-
-      Description_Facultatif: "Test écriture table enfant",
-
+      Description_Facultatif: "TEST DESCRIPTION",
       Niveau_de_confidentialite:
         "1 : Donnée publique diffusable à l’externe"
-
     }]);
 
-    console.log("TEST : résultat création", lignes);
+    console.log("CREATE =", created);
+
+    // 2. Relecture immédiate de la table
+    const data =
+      await grist.raw.docApi.fetchTable("Jeux_de_donnees");
+
+    console.log("FETCH =", data);
 
     result.textContent =
-      "✅ Ligne créée dans Jeux_de_donnees !";
+      "CREATE :\n" +
+      JSON.stringify(created, null, 2) +
+      "\n\nFETCH TABLE :\n" +
+      JSON.stringify(data, null, 2);
 
   }
 
   catch (e) {
 
-    console.error("TEST : ERREUR", e);
+    console.error(e);
 
     result.textContent =
-      "❌ ERREUR : " + (e.message || e);
+      "ERREUR :\n" +
+      (e.message || e);
 
   }
-
-  button.disabled = false;
 
 });
 
