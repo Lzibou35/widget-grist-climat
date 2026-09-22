@@ -2,7 +2,6 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Test Grist</title>
 
 <script src="https://grist.numerique.gouv.fr/grist-plugin-api.js"></script>
@@ -18,7 +17,7 @@ button {
   font-size: 16px;
 }
 
-pre {
+#result {
   margin-top: 20px;
   padding: 15px;
   background: #f1f1f1;
@@ -29,13 +28,11 @@ pre {
 
 <body>
 
-<h2>Test Jeux_de_donnees</h2>
+<h2>Test AddRecord</h2>
 
-<button id="test">
-Créer puis relire
-</button>
+<button id="test">Créer TEST_APPLY</button>
 
-<pre id="result">En attente…</pre>
+<div id="result">En attente…</div>
 
 <script>
 
@@ -43,52 +40,53 @@ grist.ready({
   requiredAccess: "full"
 });
 
-document.getElementById("test").addEventListener("click", async () => {
+const button = document.getElementById("test");
+const result = document.getElementById("result");
 
-  const result = document.getElementById("result");
+button.addEventListener("click", async () => {
+
+  button.disabled = true;
+  result.textContent = "Création en cours…";
 
   try {
 
-    result.textContent = "Création en cours…";
+    console.log("grist =", grist);
+    console.log("docApi =", grist.docApi);
 
-    const table = grist.getTable("Jeux_de_donnees");
+    const actions = [[
+      "AddRecord",
+      "Jeux_de_donnees",
+      null,
+      {
+        Donnee: "TEST_APPLY",
+        Theme: "Climat",
+        Pole: "Stratégie",
+        Description_Facultatif: "Test AddRecord",
+        Niveau_de_confidentialite:
+          "1 : Donnée publique diffusable à l’externe"
+      }
+    ]];
 
-    // 1. Création
-    const created = await table.create([{
-      Donnee: "TEST_ENFANT_001",
-      Theme: "Climat",
-      Pole: "Stratégie",
-      Description_Facultatif: "TEST DESCRIPTION",
-      Niveau_de_confidentialite:
-        "1 : Donnée publique diffusable à l’externe"
-    }]);
+    const response =
+      await grist.docApi.applyUserActions(actions);
 
-    console.log("CREATE =", created);
-
-    // 2. Relecture immédiate de la table
-    const data =
-      await grist.raw.docApi.fetchTable("Jeux_de_donnees");
-
-    console.log("FETCH =", data);
-
-    result.textContent =
-      "CREATE :\n" +
-      JSON.stringify(created, null, 2) +
-      "\n\nFETCH TABLE :\n" +
-      JSON.stringify(data, null, 2);
-
-  }
-
-  catch (e) {
-
-    console.error(e);
+    console.log("REPONSE :", response);
 
     result.textContent =
-      "ERREUR :\n" +
+      "✅ AddRecord exécuté.\n\n" +
+      JSON.stringify(response, null, 2);
+
+  } catch (e) {
+
+    console.error("ERREUR :", e);
+
+    result.textContent =
+      "❌ ERREUR :\n\n" +
       (e.message || e);
 
   }
 
+  button.disabled = false;
 });
 
 </script>
