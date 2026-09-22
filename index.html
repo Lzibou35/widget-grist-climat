@@ -1,31 +1,103 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Test Grist</title>
+
 <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
 
-<script>
-grist.ready({requiredAccess:"full"});
-
-async function test() {
-  try {
-    const childTable = grist.getTable("Jeux_de_donnees");
-
-    console.log("Création de la ligne enfant...");
-
-    const result = await childTable.create([{
-      Donnee: "TEST_ENFANT",
-      Theme: "Climat",
-      Pole: "Stratégie",
-      Description_Facultatif: "Test écriture table enfant",
-      Niveau_de_confidentialite: "1 : Donnée publique diffusable à l’externe"
-    }]);
-
-    console.log("RESULTAT CREATION :", result);
-
-    alert("OK : ligne créée dans Jeux_de_donnees !");
-  }
-  catch(e) {
-    console.error("ERREUR CREATION :", e);
-    alert("ERREUR : " + (e.message || e));
-  }
+<style>
+body {
+  font-family: Arial, sans-serif;
+  padding: 30px;
 }
 
-window.addEventListener("load", test);
+button {
+  padding: 12px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+#result {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f1f1f1;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Test écriture Jeux_de_donnees</h2>
+
+<button id="test">
+Créer une ligne de test
+</button>
+
+<div id="result">
+En attente du test…
+</div>
+
+<script>
+
+grist.ready({
+  requiredAccess: "full"
+});
+
+const button = document.getElementById("test");
+const result = document.getElementById("result");
+
+button.addEventListener("click", async function() {
+
+  result.textContent = "Création en cours…";
+  button.disabled = true;
+
+  try {
+
+    console.log("TEST : début");
+
+    const table = grist.getTable("Jeux_de_donnees");
+
+    console.log("TEST : table obtenue", table);
+
+    const lignes = await table.create([{
+
+      Donnee: "TEST_ENFANT",
+
+      Theme: "Climat",
+
+      Pole: "Stratégie",
+
+      Description_Facultatif: "Test écriture table enfant",
+
+      Niveau_de_confidentialite:
+        "1 : Donnée publique diffusable à l’externe"
+
+    }]);
+
+    console.log("TEST : résultat création", lignes);
+
+    result.textContent =
+      "✅ Ligne créée dans Jeux_de_donnees !";
+
+  }
+
+  catch (e) {
+
+    console.error("TEST : ERREUR", e);
+
+    result.textContent =
+      "❌ ERREUR : " + (e.message || e);
+
+  }
+
+  button.disabled = false;
+
+});
+
 </script>
+
+</body>
+</html>
