@@ -1,20 +1,16 @@
-console.log('grist:', grist);
-console.log('selectedTable:', grist.selectedTable);
-
 try {
-  const table = grist.selectedTable;
+  const tableId = grist.selectedTable.getTableId();
 
-  console.log('table id:', table?.getTableId?.());
-  console.log('table methods:', Object.keys(table || {}));
+  console.log("TABLE =", tableId);
 
-  const result = await table.create({
-    Prenom: 'TEST',
-    Nom: 'TEST',
-    'Pôle': 'TEST',
-    'Utilisez_vous_des_donnees_pouvant_etre_utilisees_en_interne_notes_prefet_contexte_': 'Oui'
-  });
+  const result = await grist.docApi.applyUserActions([
+    ["AddRecord", tableId, null, {
+      Prenom: "TEST"
+    }]
+  ]);
 
-  console.log('RESULT:', result);
-} catch (err) {
-  console.error('ERREUR CREATE:', err);
+  console.log("RESULTAT =", result);
+
+} catch (e) {
+  console.error("ERREUR COMPLETE =", e);
 }
