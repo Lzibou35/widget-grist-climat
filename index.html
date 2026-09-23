@@ -154,11 +154,11 @@ finish.addEventListener("click",async()=>{
         Theme:getValue(".theme",card),
         Pole:getValue(".dpole",card),
         Description_Facultatif:getValue(".description",card),
-        Niveau_confidentialite:getValue(".conf",card)
+        Niveau_de_confidentialite:getValue(".conf",card)
       }));
 
       for(const row of records){
-        if(!row.Donnee || !row.Theme || !row.Pole || !row.Niveau_confidentialite){
+        if(!row.Donnee || !row.Theme || !row.Pole || !row.Niveau_de_confidentialite){
           throw new Error("Merci de compléter les champs obligatoires de chaque jeu de données.");
         }
       }
@@ -194,7 +194,7 @@ finish.addEventListener("click",async()=>{
             Theme:row.Theme,
             Pole:row.Pole,
             Description_Facultatif:row.Description_Facultatif,
-            Niveau_de_confidentialite:row.Niveau_confidentialite
+            Niveau_de_confidentialite:row.Niveau_de_confidentialite
           }
         }))
       );
