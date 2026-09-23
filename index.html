@@ -3,76 +3,196 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Test accès Grist</title>
+
+<title>Test formulaire CAEC</title>
 
 <script src="https://grist.numerique.gouv.fr/grist-plugin-api.js"></script>
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  padding: 30px;
+body{
+  font-family:Arial,sans-serif;
+  margin:0;
+  background:#fff;
+  color:#222;
 }
 
-button {
-  padding: 12px 20px;
-  font-size: 16px;
-  cursor: pointer;
+.wrap{
+  max-width:800px;
+  margin:0 auto;
+  padding:30px;
 }
 
-pre {
-  margin-top: 20px;
-  padding: 15px;
-  background: #f1f1f1;
-  white-space: pre-wrap;
+h1{
+  font-size:24px;
+  margin:0 0 25px;
+}
+
+label{
+  display:block;
+  font-weight:600;
+  margin:16px 0 6px;
+}
+
+input,select,textarea{
+  box-sizing:border-box;
+  width:100%;
+  padding:10px;
+  border:1px solid #bbb;
+  border-radius:6px;
+  font:inherit;
+}
+
+button{
+  margin-top:25px;
+  padding:11px 18px;
+  border:0;
+  border-radius:7px;
+  background:#3b5ccc;
+  color:white;
+  font-weight:600;
+  cursor:pointer;
+}
+
+button:disabled{
+  opacity:.6;
+}
+
+#status{
+  margin-top:20px;
+  padding:12px;
+  border-radius:7px;
+  background:#eef5ee;
+}
+
+.error{
+  background:#fdeeee !important;
+  color:#8a1f1f;
 }
 </style>
 </head>
 
 <body>
 
-<h2>Test accès API Grist</h2>
+<div class="wrap">
 
-<button id="test">Tester l'accès</button>
+<h1>Test formulaire CAEC</h1>
 
-<pre id="result">En attente…</pre>
+<label for="prenom">Prénom</label>
+<input id="prenom" type="text">
+
+<label for="nom">Nom</label>
+<input id="nom" type="text">
+
+<label for="pole">Pôle</label>
+<input id="pole" type="text">
+
+<label>
+Utilisez-vous des données pouvant être utilisées en interne
+(notes préfet, contexte…) ?
+</label>
+
+<select id="interne">
+  <option value="">Sélectionner…</option>
+  <option value="Oui">Oui</option>
+  <option value="Non">Non</option>
+</select>
+
+<button id="submit">
+Enregistrer le test
+</button>
+
+<div id="status">En attente…</div>
+
+</div>
 
 <script>
 
 grist.ready({
-  requiredAccess: "full"
+  requiredAccess:"full"
 });
 
-document.getElementById("test").addEventListener("click", async () => {
+const submit = document.getElementById("submit");
+const status = document.getElementById("status");
 
-  const result = document.getElementById("result");
+submit.addEventListener("click", async () => {
+
+  status.className = "";
+  status.textContent = "Enregistrement en cours…";
+  submit.disabled = true;
 
   try {
 
-    result.textContent = "Obtention du jeton…";
+    const prenom =
+      document.getElementById("prenom").value.trim();
 
-    console.log("grist =", grist);
-    console.log("getAccessToken =", grist.getAccessToken);
+    const nom =
+      document.getElementById("nom").value.trim();
 
-    const tokenInfo = await grist.getAccessToken({
-      readOnly: false
+    const pole =
+      document.getElementById("pole").value.trim();
+
+    const interne =
+      document.getElementById("interne").value;
+
+    if (!prenom || !nom || !pole || !interne) {
+      throw new Error(
+        "Merci de compléter tous les champs."
+      );
+    }
+
+    /*
+     * IMPORTANT :
+     * On utilise exactement le mécanisme
+     * du formulaire fourni par la Direction numérique.
+     */
+    const table = grist.selectedTable;
+
+    if (!table) {
+      throw new Error(
+        "Impossible d'accéder à la table sélectionnée."
+      );
+    }
+
+    const fields = {
+
+      Prenom: prenom,
+
+      Nom: nom,
+
+      Pole: pole,
+
+      Utilisez_vous_des_donnees_pouvant_etre_utilisees_en_interne_notes_prefet_contexte_:
+        interne
+
+    };
+
+    console.log("Table sélectionnée :", table);
+    console.log("Champs envoyés :", fields);
+
+    const result = await table.create({
+      fields: fields
     });
 
-    console.log("TOKEN INFO =", tokenInfo);
+    console.log("Résultat Grist :", result);
 
-    result.textContent =
-      "✅ JETON OBTENU\n\n" +
-      "baseUrl : " + tokenInfo.baseUrl + "\n\n" +
-      "ttlMsecs : " + tokenInfo.ttlMsecs;
+    status.textContent =
+      "✅ TEST OK : la ligne a été créée dans Grist.";
 
-  } catch (e) {
+  }
 
-    console.error("ERREUR =", e);
+  catch(e) {
 
-    result.textContent =
-      "❌ ERREUR\n\n" +
+    console.error("Erreur :", e);
+
+    status.className = "error";
+
+    status.textContent =
+      "❌ ERREUR : " +
       (e.message || e);
 
   }
+
+  submit.disabled = false;
 
 });
 
