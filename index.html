@@ -1,12 +1,20 @@
-const parentTable = grist.selectedTable;
+console.log('grist:', grist);
+console.log('selectedTable:', grist.selectedTable);
 
-const result = await parentTable.create({
-  fields: {
-    Prenom: "TEST",
-    Nom: "TEST",
-    "Pôle": "TEST",
-    "Utilisez_vous_des_donnees_pouvant_etre_utilisees_en_interne_notes_prefet_contexte_": "Oui"
-  }
-});
+try {
+  const table = grist.selectedTable;
 
-console.log(result);
+  console.log('table id:', table?.getTableId?.());
+  console.log('table methods:', Object.keys(table || {}));
+
+  const result = await table.create({
+    Prenom: 'TEST',
+    Nom: 'TEST',
+    'Pôle': 'TEST',
+    'Utilisez_vous_des_donnees_pouvant_etre_utilisees_en_interne_notes_prefet_contexte_': 'Oui'
+  });
+
+  console.log('RESULT:', result);
+} catch (err) {
+  console.error('ERREUR CREATE:', err);
+}
